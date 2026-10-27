@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>مركزي الشخصي</title>
+<meta name="description" content="مركز شخصي لتنظيم المهام والعادات والتعلم والمشاريع">
+<meta name="theme-color" content="#1f7a6d">
+<style>
+:root{--bg:#f6f4ef;--card:#fff;--tx:#1f2a2e;--mu:#6b777c;--ac:#1f7a6d;--ac2:#e3f2ef;--bd:#e4e0d6;--wa:#c0492f;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14191b;--card:#1d2528;--tx:#e8eeee;--mu:#93a1a5;--ac:#4fc3b0;--ac2:#1f3532;--bd:#2c383b;--wa:#ef8a70;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#14191b;--card:#1d2528;--tx:#e8eeee;--mu:#93a1a5;--ac:#4fc3b0;--ac2:#1f3532;--bd:#2c383b;--wa:#ef8a70;color-scheme:dark}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+main{max-width:760px;margin:0 auto;padding:14px}
+h2{font-size:18px;margin:6px 0 12px}h3{font-size:15px;margin:0 0 8px}
+.c{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px;margin-bottom:12px}
+.r{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.sp{justify-content:space-between}
+button,select,input,textarea{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:8px 10px;max-width:100%}
+button{cursor:pointer}.p{background:var(--ac);color:#fff;border-color:var(--ac)}.g{border:0;background:transparent;padding:4px 6px}
+.chip{font-size:12px;background:var(--ac2);color:var(--ac);border-radius:20px;padding:2px 9px}
+.mu{color:var(--mu);font-size:13px}.wa{color:var(--wa)}
+.row{display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd)}.row:last-child{border:0}
+.row .t{flex:1;min-width:0}.done .tt{text-decoration:line-through;color:var(--mu)}
+.big{font-size:54px;font-weight:700;text-align:center;font-variant-numeric:tabular-nums;direction:ltr;margin:10px 0}
+.bar{height:10px;background:var(--ac2);border-radius:8px;overflow:hidden;flex:1;min-width:80px}.bar i{display:block;height:100%;background:var(--ac)}
+nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--bd);display:flex;overflow-x:auto;padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px))}
+nav button{border:0;background:none;flex:0 0 auto;min-width:62px;font-size:11px;color:var(--mu);display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 6px}
+nav button b{font-size:19px;font-weight:400}nav .on{color:var(--ac);font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:10px}
+.site{display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none;color:var(--tx);font-size:12px;text-align:center}
+.ic{width:46px;height:46px;border-radius:13px;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:19px}
+dialog{border:1px solid var(--bd);border-radius:16px;background:var(--card);color:var(--tx);width:min(92vw,440px);padding:14px}
+dialog label{display:block;margin:8px 0 3px;font-size:13px;color:var(--mu)}dialog input,dialog select,dialog textarea{width:100%}
+.days label{display:inline-flex;gap:3px;align-items:center;margin:2px 6px 2px 0;color:var(--tx)}.days input{width:auto}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;font-size:13px}.cal div{padding:8px 0;border-radius:8px;background:var(--ac2);cursor:pointer}
+.toast{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:12px;right:12px;background:var(--ac);color:#fff;padding:12px;border-radius:12px;z-index:9;text-align:center}
+</style></head><body>
+<div id="sy" style="position:fixed;top:calc(4px + env(safe-area-inset-top,0px));left:8px;font-size:11px;color:var(--mu);z-index:5;pointer-events:none">💾 محفوظ في متصفحك</div><main id="m"></main><nav id="nav"></nav><dialog id="dlg"></dialog>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const DN=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+let D={};try{D=JSON.parse(localStorage.getItem('hub'))||{}}catch(e){}
+const mk=(id,n,ic,c)=>({id,n,ic,c:c||'',links:[],items:[],note:''});
+const dflt={fields:[],cats:['تعلم','عمل','القراءة','البحث عن الوظائف','العبادات','الصحة والعناية','مشاريع','أخرى'],projects:[],tasks:[],habits:[],hlog:{},sessions:[],goals:[],active:null,fired:{},cfg:{pomo:25,brk:5},jobs:{custom:[],log:[],goal:5},learn:[],revs:[],ideas:[],todo:[],books:[],rlog:[]};
+for(const k in dflt)if(D[k]==null)D[k]=dflt[k];
+const setSy=t=>{const e=document.getElementById('sy');if(e)e.textContent=t};
+const save=()=>{D.act=D.act||{};D.act[ds()]=1;D._at=Date.now();try{localStorage.setItem('hub',JSON.stringify(D))}catch(e){setSy('⚠️ المتصفح يمنع الحفظ')}};
+const ds=d=>{d=d||new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const add=(s,n)=>{const d=new Date(s+'T00:00');d.setDate(d.getDate()+n);return ds(d)};
+const dow=s=>new Date(s+'T00:00').getDay();
+const today=()=>ds();
+const opts=(l,s,e)=>(e?'<option value="">'+e+'</option>':'')+l.map(x=>'<option'+(x===s?' selected':'')+'>'+esc(x)+'</option>').join('');
+const fm=s=>{s=Math.round(s);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?h+'س '+m+'د':m+'د'};
+const hms=s=>{s=Math.max(0,Math.floor(s/1000));return [Math.floor(s/3600),Math.floor(s%3600/60),s%60].map(x=>String(x).padStart(2,'0')).join(':')};
+const occ=(t,d)=>!(t.skip&&t.skip[d])&&(t.rep&&t.rep.length?d>=t.date&&t.rep.includes(dow(d)):t.date===d);
+const tasksOn=d=>D.tasks.filter(t=>occ(t,d)).sort((a,b)=>(a.time||'99').localeCompare(b.time||'99'));
+const overdue=()=>{const o=[];D.tasks.forEach(t=>{for(let i=1;i<=14;i++){const d=add(today(),-i);if(occ(t,d)&&!(t.done&&t.done[d])&&(!t.rep||!t.rep.length||i<=3))o.push([t,d])}});return o};
+const toast=m=>{const e=document.createElement('div');e.className='toast';e.textContent=m;document.body.appendChild(e);setTimeout(()=>e.remove(),5000)};
+function notify(m){toast(m);try{if(window.Notification&&Notification.permission==='granted')new Notification('مركزي الشخصي',{body:m})}catch(e){}if(navigator.vibrate)navigator.vibrate(200)}
+
+let tab='home',pv='day',pd=today(),rg='week',tm='sw';
+const TABS=[['home','🏠','الرئيسية'],['todo','📝','المهام'],['timer','⏱️','المؤقت'],['plan','📅','الجدول'],['habits','✅','العادات'],['proj','🎯','المشاريع'],['jobs','💼','الوظائف'],['learn','🎓','التعلم'],['books','📚','الكتب'],['rev','🔁','المراجعة'],['idea','💡','الأفكار'],['rep','📊','التقارير'],['set','⚙️','الإعدادات']];
+function go(t){tab=t;render()}
+function render(){
+ $('#nav').innerHTML=TABS.map(x=>`<button class="${x[0]===tab?'on':''}" onclick="go('${x[0]}')"><b>${x[1]}</b>${x[2]}</button>`).join('');
+ $('#m').innerHTML=V[tab]();window.scrollTo(0,0)}
+
+/* ---- tasks ---- */
+function trow(t,d){const dn=t.done&&t.done[d];const act=D.sessions.filter(s=>s.task===t.id&&s.date===d).reduce((a,s)=>a+s.sec,0);
+ return `<div class="row ${dn?'done':''}"><input type="checkbox" ${dn?'checked':''} onchange="tg(${t.id},'${d}')"><div class="t"><div class="tt">${esc(t.t)}</div><div class="mu">${t.time||''} ${t.dur?'· '+t.dur+'د':''} ${act?'· فعلي '+fm(act):''} ${t.rep&&t.rep.length?'· 🔁':''}</div><span class="chip">${esc(t.cat||'')}</span></div>
+ <button class="g" onclick="tstart(${t.id})">▶</button><button class="g" onclick="mv(${t.id},'${d}')">⏭</button><button class="g" onclick="tdlg(${t.id})">✎</button><button class="g" onclick="del(${t.id})">🗑</button></div>`}
+function tg(id,d){const t=D.tasks.find(x=>x.id===id);t.done=t.done||{};t.done[d]?delete t.done[d]:t.done[d]=1;save();render()}
+function del(id){if(confirm('حذف المهمة؟')){D.tasks=D.tasks.filter(t=>t.id!==id);save();render()}}
+function mv(id,d){const n=prompt('نقل إلى تاريخ (YYYY-MM-DD):',add(d,1));if(!n)return;const t=D.tasks.find(x=>x.id===id);
+ if(t.rep&&t.rep.length){t.skip=t.skip||{};t.skip[d]=1;D.tasks.push({id:Date.now(),t:t.t,cat:t.cat,proj:t.proj,date:n,time:t.time,dur:t.dur,rem:t.rem,rep:[]})}else t.date=n;save();render()}
+function tdlg(id){const t=D.tasks.find(x=>x.id===id)||{rep:[],date:pd,rem:10,dur:30};
+ $('#dlg').innerHTML=`<h3>${id?'تعديل':'إضافة'} نشاط</h3><label>العنوان</label><input id="f1" value="${esc(t.t||'')}"><label>التصنيف</label><select id="f2">${opts(D.cats,t.cat)}</select><label>المشروع</label><select id="f3">${opts(D.projects,t.proj,'— بدون —')}</select>
+ <div class="r"><div style="flex:1"><label>التاريخ/البداية</label><input id="f4" type="date" value="${t.date}"></div><div style="flex:1"><label>الوقت</label><input id="f5" type="time" value="${t.time||''}"></div></div>
+ <div class="r"><div style="flex:1"><label>المدة (دقيقة)</label><input id="f6" type="number" value="${t.dur||''}"></div><div style="flex:1"><label>تذكير قبل (دقيقة، فارغ=بدون)</label><input id="f7" type="number" value="${t.rem==null?'':t.rem}"></div></div>
+ <label>التكرار (فارغ = مرة واحدة)</label><div class="days">${DN.map((n,i)=>`<label><input type="checkbox" class="rp" value="${i}" ${t.rep.includes(i)?'checked':''}>${n.slice(0,3)}</label>`).join('')}</div>
+ <div class="r" style="margin-top:12px"><button class="p" onclick="tsave(${id||0})">حفظ</button><button onclick="$('#dlg').close()">إلغاء</button></div>`;$('#dlg').showModal()}
+function tsave(id){const v=i=>$('#f'+i).value;if(!v(1).trim())return;
+ const o={t:v(1).trim(),cat:v(2),proj:v(3),date:v(4)||today(),time:v(5),dur:+v(6)||0,rem:v(7)===''?null:+v(7),rep:[...document.querySelectorAll('.rp:checked')].map(x=>+x.value)};
+ if(id)Object.assign(D.tasks.find(t=>t.id===id),o);else D.tasks.push(Object.assign({id:Date.now(),done:{}},o));
+ save();$('#dlg').close();render()}
+
+/* ---- views ---- */
+const V={};
+V.home=()=>{const d=today(),L=tasksOn(d),dn=L.filter(t=>t.done&&t.done[d]).length,pc=L.length?Math.round(dn/L.length*100):0;
+ const sec=D.sessions.filter(s=>s.date===d).reduce((a,s)=>a+s.sec,0),now=new Date().toTimeString().slice(0,5),up=L.filter(t=>t.time>=now&&!(t.done&&t.done[d])),od=overdue();
+ return `<h2>مرحبًا 👋 ${DN[dow(d)]} ${d}</h2>
+ <div class="c"><div class="r sp"><h3>إنجاز اليوم</h3><span>${dn}/${L.length}</span></div><div class="r"><div class="bar"><i style="width:${pc}%"></i></div><b>${pc}%</b></div><div class="mu" style="margin-top:6px">الوقت المسجل اليوم: ${fm(sec)}</div></div>
+ ${D.active?`<div class="c r sp"><div>⏱️ مؤقت نشط: <b>${esc(D.active.cat)}</b></div><button class="p" onclick="go('timer')">فتح</button></div>`:''}
+ ${streakCard()}${habCard()}${revNudge()}${todoCard()}<div class="c"><h3>مهام اليوم</h3>${L.map(t=>trow(t,d)).join('')||'<div class="mu">لا مهام اليوم</div>'}<button onclick="tdlg(0)" style="margin-top:8px">＋ إضافة نشاط</button></div>
+ <div class="c"><h3>القادم</h3>${up.slice(0,3).map(t=>`<div class="row"><div class="t">${esc(t.t)}</div><span class="mu">${t.time}</span></div>`).join('')||'<div class="mu">لا شيء قادم</div>'}</div>
+ ${od.length?`<div class="c"><h3 class="wa">متأخرة (${od.length})</h3>${od.slice(0,6).map(x=>`<div class="row"><div class="t">${esc(x[0].t)}<div class="mu">${x[1]}</div></div><button class="g" onclick="mv(${x[0].id},'${x[1]}')">نقل ⏭</button></div>`).join('')}</div>`:''}`};
+V.plan=()=>{let body='';
+ if(pv==='day'){body=tasksOn(pd).map(t=>trow(t,pd)).join('')||'<div class="mu">لا أنشطة في هذا اليوم</div>'}
+ else if(pv==='week'){for(let i=0;i<7;i++){const d=add(pd,i);body+=`<div class="mu" style="margin-top:8px"><b>${DN[dow(d)]} ${d}</b></div>`+(tasksOn(d).map(t=>trow(t,d)).join('')||'<div class="mu">—</div>')}}
+ else{const f=pd.slice(0,8)+'01',s=dow(f),n=new Date(+f.slice(0,4),+f.slice(5,7),0).getDate();body='<div class="cal">'+DN.map(x=>`<b>${x.slice(0,3)}</b>`).join('')+'<span></span>'.repeat(s)+Array.from({length:n},(_,i)=>{const d=f.slice(0,8)+String(i+1).padStart(2,'0'),c=tasksOn(d).length;return `<div onclick="pd='${d}';pv='day';render()">${i+1}<br><small>${c||''}</small></div>`}).join('')+'</div>'}
+ return `<h2>الجدول</h2><div class="r sp"><div class="r">${[['day','يوم'],['week','أسبوع'],['month','شهر']].map(x=>`<button class="${pv===x[0]?'p':''}" onclick="pv='${x[0]}';render()">${x[1]}</button>`).join('')}</div><input type="date" value="${pd}" onchange="pd=this.value;render()"></div>
+ <div class="c" style="margin-top:10px">${body}</div><button class="p" onclick="tdlg(0)">＋ نشاط جديد</button>`};
+
+/* timer */
+const A=()=>D.active,el=()=>{const a=A();return a.acc+(a.seg?Date.now()-a.seg:0)};
+function tmode(m){tm=m;render()}
+function tstart(id){const t=D.tasks.find(x=>x.id===id);tab='timer';if(!D.active){D.active={mode:tm,acc:0,seg:null,cat:t.cat,proj:t.proj||'',task:id,phase:'focus',t0:Date.now(),target:0};}tm=D.active.mode;startT(true);}
+function startT(skip){if(!D.active){const g=i=>$('#'+i).value;const m=tm;let tg=0;if(m==='cd')tg=(+g('cdm')||25)*60000;if(m==='pomo')tg=D.cfg.pomo*60000;
+ D.active={mode:m,acc:0,seg:null,cat:g('tcat'),proj:g('tproj'),task:+g('ttask')||0,phase:'focus',t0:Date.now(),target:tg}}
+ if(!D.active.seg)D.active.seg=Date.now();save();render()}
+function pauseT(){const a=A();a.acc=el();a.seg=null;save();render()}
+function saveSess(sec,a){if(sec<5)return;D.sessions.push({id:Date.now(),cat:a.cat,proj:a.proj,task:a.task,sec:Math.round(sec),date:ds(new Date(a.t0)),start:a.t0})}
+function endT(){const a=A();if(a.phase==='focus')saveSess(el()/1000,a);D.active=null;save();
+ if(a.task&&a.phase==='focus'&&confirm('هل أنجزت المهمة؟')){const t=D.tasks.find(x=>x.id===a.task);if(t){t.done=t.done||{};t.done[today()]=1}save()}render()}
+function tick(){const a=D.active,e=document.getElementById('disp');if(!a)return;const x=el();
+ if(e)e.textContent=a.mode==='sw'?hms(x):hms(a.target-x);
+ if(a.seg&&a.mode!=='sw'&&x>=a.target){if(a.mode==='cd'){saveSess(a.target/1000,a);D.active=null;save();notify('انتهى المؤقت ✅');render()}
+  else{if(a.phase==='focus'){saveSess(a.target/1000,a);a.phase='break';a.target=D.cfg.brk*60000;a.t0=Date.now();notify('وقت الاستراحة ☕')}else{a.phase='focus';a.target=D.cfg.pomo*60000;a.t0=Date.now();notify('عودة للتركيز 🎯')}a.acc=0;a.seg=Date.now();save();render()}}}
+function msess(){const m=+prompt('عدد الدقائق:','30');if(!m)return;const d=prompt('التاريخ:',today());D.sessions.push({id:Date.now(),cat:$('#tcat')?$('#tcat').value:D.cats[0],proj:'',task:0,sec:m*60,date:d,start:Date.now()});save();render()}
+function esess(id,k){const s=D.sessions.find(x=>x.id===id);if(k){D.sessions=D.sessions.filter(x=>x.id!==id)}else{const m=+prompt('الدقائق:',Math.round(s.sec/60));if(m)s.sec=m*60}save();render()}
+V.timer=()=>{const a=A(),d=today();const ss=D.sessions.filter(s=>s.date===d).slice().reverse();
+ const ctl=a?`<div class="mu" style="text-align:center">${esc(a.cat)} ${a.proj?'· '+esc(a.proj):''} ${a.mode==='pomo'?'· '+(a.phase==='focus'?'تركيز':'استراحة'):''}</div>
+ <div class="r" style="justify-content:center">${a.seg?'<button onclick="pauseT()">⏸ إيقاف مؤقت</button>':'<button class="p" onclick="startT()">▶ استئناف</button>'}<button onclick="endT()">⏹ إنهاء</button></div>`:
+ `<div class="r" style="justify-content:center">${[['sw','ساعة إيقاف'],['cd','تنازلي'],['pomo','بومودورو']].map(x=>`<button class="${tm===x[0]?'p':''}" onclick="tmode('${x[0]}')">${x[1]}</button>`).join('')}</div>
+ ${tm==='cd'?'<label class="mu">الدقائق</label> <input id="cdm" type="number" value="25" style="width:80px">':''}
+ <div class="big">${tm==='sw'?'00:00:00':hms((tm==='cd'?25:D.cfg.pomo)*60000)}</div>
+ <label class="mu">التصنيف</label><select id="tcat" style="width:100%">${opts(D.cats)}</select><label class="mu">المشروع</label><select id="tproj" style="width:100%">${opts(D.projects,'','— بدون —')}</select>
+ <label class="mu">المهمة</label><select id="ttask" style="width:100%"><option value="">— بدون —</option>${tasksOn(d).map(t=>`<option value="${t.id}">${esc(t.t)}</option>`).join('')}</select>
+ <div class="r" style="justify-content:center;margin-top:12px"><button class="p" onclick="startT()">▶ ابدأ</button></div>`;
+ return `<h2>المؤقت</h2><div class="c">${a?`<div class="big" id="disp">${a.mode==='sw'?hms(el()):hms(a.target-el())}</div>`:''}${ctl}</div>
+ <div class="c"><div class="r sp"><h3>جلسات اليوم</h3><button onclick="msess()">＋ يدوي</button></div>${ss.map(s=>`<div class="row"><div class="t">${esc(s.cat)} <span class="mu">${s.proj?esc(s.proj):''}</span></div><b>${fm(s.sec)}</b><button class="g" onclick="esess(${s.id})">✎</button><button class="g" onclick="esess(${s.id},1)">🗑</button></div>`).join('')||'<div class="mu">لا جلسات بعد</div>'}</div>`};
+
+/* habits */
+const hk=(d,id)=>d+'|'+id;
+function hmark(id,d){const h=D.habits.find(x=>x.id===id),k=hk(d,id);if(h.ty==='check'){D.hlog[k]?delete D.hlog[k]:D.hlog[k]=1}else{const m=+prompt('أضف دقائق:','10');if(!m)return;D.hlog[k]=(D.hlog[k]||0)+m}save();render()}
+function streak(h){let n=0,d=today();if(!D.hlog[hk(d,h.id)])d=add(d,-1);while(D.hlog[hk(d,h.id)]){n++;d=add(d,-1)}return n}
+function hadd(){const n=prompt('اسم العادة:');if(!n)return;const ty=confirm('موافق = عادة بنقرة واحدة، إلغاء = عادة بهدف زمني')?'check':'time';const tg=ty==='time'?+prompt('الهدف بالدقائق يوميًا:','20'):0;const mt=+prompt('هدف شهري بعدد المرات (0 = بدون):','0')||0;D.habits.push({id:Date.now(),n,ty,tg,mt});save();render()}
+function hdel(id){if(confirm('حذف العادة؟')){D.habits=D.habits.filter(h=>h.id!==id);save();render()}}
+V.habits=()=>{const d=today(),mo=d.slice(0,7);return `<h2>العادات</h2><div class="c">${D.habits.map(h=>{const v=D.hlog[hk(d,h.id)]||0;const mc=Object.keys(D.hlog).filter(k=>k.startsWith(mo)&&k.endsWith('|'+h.id)).length;
+ return `<div class="row ${h.ty==='check'&&v?'done':''}"><div class="t"><div class="tt">${esc(h.n)}</div><div class="mu">🔥 ${streak(h)} يوم ${h.ty==='time'?'· '+v+'/'+h.tg+'د':''} ${h.mt?'· الشهر '+mc+'/'+h.mt:''}</div></div>
+ <button class="${v?'p':''}" onclick="hmark(${h.id},'${d}')">${h.ty==='check'?(v?'✔ تم':'تسجيل'):'＋ دقائق'}</button><button class="g" onclick="hdel(${h.id})">🗑</button></div>`}).join('')}</div><button class="p" onclick="hadd()">＋ عادة جديدة</button>`};
+
+/* projects & goals */
+function padd(){const n=prompt('اسم المشروع:');if(n){D.projects.push(n);save();render()}}
+function pdel(i){if(confirm('حذف المشروع؟')){D.projects.splice(i,1);save();render()}}
+function gadd(){const n=prompt('الهدف الكبير:');if(!n)return;D.goals.push({id:Date.now(),t:n,proj:'',steps:[]});save();render()}
+function sadd(id){const n=prompt('الخطوة/المهمة الصغيرة:');if(!n)return;D.goals.find(g=>g.id===id).steps.push({t:n,d:0});save();render()}
+function stg(id,i){const s=D.goals.find(g=>g.id===id).steps[i];s.d=s.d?0:1;save();render()}
+function gdel(id){if(confirm('حذف الهدف؟')){D.goals=D.goals.filter(g=>g.id!==id);save();render()}}
+V.proj=()=>{const tot=p=>D.sessions.filter(s=>s.proj===p).reduce((a,s)=>a+s.sec,0);
+ return `<h2>المشاريع والأهداف</h2><div class="c"><h3>مشاريعي</h3>${D.projects.map((p,i)=>`<div class="row"><div class="t">${esc(p)}</div><span class="mu">${fm(tot(p))}</span><button class="g" onclick="pdel(${i})">🗑</button></div>`).join('')}<button onclick="padd()" style="margin-top:8px">＋ مشروع</button></div>
+ ${D.goals.map(g=>{const dn=g.steps.filter(s=>s.d).length,pc=g.steps.length?Math.round(dn/g.steps.length*100):0;return `<div class="c"><div class="r sp"><h3>${esc(g.t)}</h3><button class="g" onclick="gdel(${g.id})">🗑</button></div><div class="r"><div class="bar"><i style="width:${pc}%"></i></div><b>${pc}%</b></div>
+ ${g.steps.map((s,i)=>`<div class="row ${s.d?'done':''}"><input type="checkbox" ${s.d?'checked':''} onchange="stg(${g.id},${i})"><div class="t tt">${esc(s.t)}</div></div>`).join('')}<button onclick="sadd(${g.id})">＋ خطوة</button></div>`}).join('')}
+ <button class="p" onclick="gadd()">＋ هدف كبير</button>`};
+
+/* jobs */
+const SITES=[['LinkedIn','https://www.linkedin.com/jobs/','in','#0a66c2'],['Indeed','https://www.indeed.com/','i','#2557a7'],['Bayt','https://www.bayt.com/','B','#e8472b'],['Glassdoor','https://www.glassdoor.com/Job/','G','#0caa41'],['جدارات','https://jadarat.sa/','ج','#1d8f6a'],['Tanqeeb','https://www.tanqeeb.com/','T','#f39c12'],['Naukrigulf','https://www.naukrigulf.com/','N','#4a6cf7'],['Wuzzuf','https://wuzzuf.net/','W','#1a1a1a'],['Google Jobs','https://www.google.com/search?q=jobs&ibp=htl;jobs','G','#ea4335']];
+const wk=d=>add(d,-((dow(d)+1)%7));
+function jadd(){const n=prompt('اسم الموقع/الصفحة:');if(!n)return;let u=prompt('الرابط (https://...):','https://');if(!/^https?:\/\//i.test(u))return;D.jobs.custom.push({n,u});save();render()}
+function jdel(i){if(confirm('حذف؟')){D.jobs.custom.splice(i,1);save();render()}}
+function jlog(k){if(k>0)D.jobs.log.push({d:today()});else{const i=D.jobs.log.map(x=>x.d>=wk(today())).lastIndexOf(true);if(i>=0)D.jobs.log.splice(i,1)}save();render()}
+function jgoal(){const n=+prompt('هدف التقديمات أسبوعيًا:',D.jobs.goal);if(n>0){D.jobs.goal=n;save();render()}}
+function jtask(){const d=+prompt('يوم التذكير الأسبوعي (0=الأحد … 6=السبت):','0');if(isNaN(d)||d<0||d>6)return;
+ D.tasks.push({id:Date.now(),t:'التقديم على وظائف ('+D.jobs.goal+' هذا الأسبوع)',cat:'البحث عن الوظائف',proj:'',date:today(),time:'10:00',dur:60,rem:10,rep:[d],done:{}});save();toast('تمت إضافة مهمة أسبوعية متكررة في الجدول');render()}
+V.jobs=()=>{const n=D.jobs.log.filter(x=>x.d>=wk(today())).length,pc=Math.min(100,Math.round(n/D.jobs.goal*100));
+ const ic=(a,b,l,c)=>`<a class="site" href="${esc(a)}" target="_blank" rel="noopener"><span class="ic" style="background:${c}">${esc(l)}</span>${esc(b)}</a>`;
+ return `<h2>التقديم على الوظائف</h2><div class="c"><h3>هدف هذا الأسبوع</h3><div class="r"><div class="bar"><i style="width:${pc}%"></i></div><b>${n}/${D.jobs.goal}</b></div>
+ <div class="r" style="margin-top:8px"><button class="p" onclick="jlog(1)">＋ قدّمت</button><button onclick="jlog(-1)">－</button><button onclick="jgoal()">تغيير الهدف</button><button onclick="jtask()">🔁 مهمة أسبوعية</button></div></div>
+ <div class="c"><h3>المواقع</h3><div class="grid">${SITES.map(s=>ic(s[1],s[0],s[2],s[3])).join('')}${D.jobs.custom.map((s,i)=>`<div style="position:relative">${ic(s.u,s.n,s.n.slice(0,1).toUpperCase(),'#7a5c9e')}<button class="g" style="position:absolute;top:-8px;left:0" onclick="jdel(${i})">✕</button></div>`).join('')}</div>
+ <button onclick="jadd()" style="margin-top:12px">＋ إضافة صفحة أو موقع</button></div>`};
+
+/* learn */
+const lcol=n=>{let h=0;for(const c of n)h=(h*31+c.charCodeAt(0))%360;return 'hsl('+h+',45%,42%)'};
+function ldlg(i){const s=i>=0?D.learn[i]:{n:'',u:'https://',c:D.cats[0]};
+ $('#dlg').innerHTML=`<h3>${i>=0?'تعديل':'إضافة'} موقع تعلم</h3><label>الاسم</label><input id="l1" value="${esc(s.n)}"><label>الرابط</label><input id="l2" dir="ltr" value="${esc(s.u)}"><label>المجال</label><select id="l3">${opts(D.cats,s.c)}</select><div class="r" style="margin-top:12px"><button class="p" onclick="lsave(${i})">حفظ</button><button onclick="$('#dlg').close()">إلغاء</button></div>`;$('#dlg').showModal()}
+function lsave(i){const n=$('#l1').value.trim(),u=$('#l2').value.trim();if(!n||!/^https?:\/\//i.test(u)){toast('أدخل اسمًا ورابطًا يبدأ بـ https://');return}const o={n,u,c:$('#l3').value};if(i>=0)D.learn[i]=o;else D.learn.push(o);save();$('#dlg').close();render()}
+function ldel(i){if(confirm('حذف؟')){D.learn.splice(i,1);save();render()}}
+function lstart(i){const s=D.learn[i];if(!D.active){D.active={mode:'sw',acc:0,seg:Date.now(),cat:s.c,proj:'',task:0,phase:'focus',t0:Date.now(),target:0};save()}else toast('يوجد مؤقت نشط بالفعل');tab='timer';render()}
+V.sites=()=>{const g={};D.learn.forEach((s,i)=>(g[s.c]=g[s.c]||[]).push([s,i]));
+ return `${Object.keys(g).map(c=>`<div class="c"><h3>${esc(c)}</h3><div class="grid">${g[c].map(([s,i])=>`<div class="site"><a class="site" href="${esc(s.u)}" target="_blank" rel="noopener"><span class="ic" style="background:${lcol(s.n)}">${esc(s.n.slice(0,1).toUpperCase())}</span>${esc(s.n)}</a><div><button class="g" onclick="lstart(${i})">▶</button><button class="g" onclick="ldlg(${i})">✎</button><button class="g" onclick="ldel(${i})">🗑</button></div></div>`).join('')}</div></div>`).join('')||'<div class="c mu">لا مواقع بعد</div>'}<button class="p" onclick="ldlg(-1)">＋ إضافة موقع</button><p class="mu">▶ يبدأ مؤقتًا بنفس مجال الموقع.</p>`};
+
+/* study slots */
+function sdlg(){$('#dlg').innerHTML=`<h3>تحديد ساعة دراسة</h3><label>المجال</label><select id="s1">${opts(D.cats,'تحليل البيانات')}</select><div class="r"><div style="flex:1"><label>وقت البدء</label><input id="s2" type="time" value="20:00"></div><div style="flex:1"><label>المدة (دقيقة)</label><input id="s3" type="number" value="60"></div></div><label>الأيام</label><div class="days">${DN.map((n,i)=>`<label><input type="checkbox" class="sdy" value="${i}" checked>${n.slice(0,3)}</label>`).join('')}</div><div class="r" style="margin-top:12px"><button class="p" onclick="ssave()">حفظ</button><button onclick="$('#dlg').close()">إلغاء</button></div>`;$('#dlg').showModal()}
+function ssave(){const rep=[...document.querySelectorAll('.sdy:checked')].map(x=>+x.value);if(!rep.length){toast('اختر يومًا واحدًا على الأقل');return}const c=$('#s1').value;D.tasks.push({id:Date.now(),t:'ساعة دراسة: '+c,cat:c,proj:'',date:today(),time:$('#s2').value,dur:+$('#s3').value||60,rem:10,rep,done:{},s:1});save();$('#dlg').close();toast('أُضيفت إلى جدولك مع تذكير قبلها بـ 10 دقائق');render()}
+const ss=()=>`<div class="c"><h3>ساعات الدراسة المحددة</h3>${D.tasks.filter(t=>t.s).map(t=>`<div class="row"><div class="t"><div class="tt">${esc(t.cat)}</div><div class="mu">${t.time} · ${t.dur}د · ${t.rep.map(i=>DN[i].slice(0,3)).join('، ')}</div></div><button class="g" onclick="tstart(${t.id})">▶</button><button class="g" onclick="tdlg(${t.id})">✎</button><button class="g" onclick="del(${t.id})">🗑</button></div>`).join('')||'<div class="mu">لم تحدد ساعة بعد</div>'}<button class="p" onclick="sdlg()" style="margin-top:8px">＋ ساعة دراسة لمجال</button></div>`;
+
+/* books */
+function bdlg(id){const b=D.books.find(x=>x.id===id)||{n:'',au:'',pg:'',rate:0,start:today(),sum:''};
+ $('#dlg').innerHTML=`<h3>${id?'تعديل':'إضافة'} كتاب</h3><label>اسم الكتاب</label><input id="b1" value="${esc(b.n)}"><label>المؤلف</label><input id="b2" value="${esc(b.au)}"><div class="r"><div style="flex:1"><label>عدد الصفحات</label><input id="b3" type="number" value="${b.pg}"></div><div style="flex:1"><label>بدأت القراءة</label><input id="b4" type="date" value="${b.start}"></div></div><label>التقييم</label><select id="b5">${[0,1,2,3,4,5].map(n=>`<option value="${n}" ${n===b.rate?'selected':''}>${n?'★'.repeat(n):'بدون تقييم'}</option>`).join('')}</select><label>ملخصي / ما استفدته</label><textarea id="b6" rows="5">${esc(b.sum)}</textarea><div class="r" style="margin-top:12px"><button class="p" onclick="bsave(${id||0})">حفظ</button><button onclick="$('#dlg').close()">إلغاء</button></div>`;$('#dlg').showModal()}
+function bsave(id){const v=i=>$('#b'+i).value;if(!v(1).trim())return;const o={n:v(1).trim(),au:v(2),pg:+v(3)||0,start:v(4)||today(),rate:+v(5),sum:v(6)};if(id)Object.assign(D.books.find(b=>b.id===id),o);else D.books.push(Object.assign({id:Date.now(),read:0,fin:0},o));save();$('#dlg').close();render()}
+function bpages(id){const n=+prompt('كم صفحة قرأت الآن؟','10');if(!n||n<1)return;const b=D.books.find(x=>x.id===id);b.read=b.pg?Math.min(b.pg,b.read+n):b.read+n;D.rlog.push({b:id,p:n,d:today()});if(b.pg&&b.read>=b.pg&&!b.fin){b.fin=1;toast('🎉 أنهيت الكتاب، لا تنس ملخصك')}save();render()}
+function bfin(id){const b=D.books.find(x=>x.id===id);b.fin=b.fin?0:1;save();render()}
+function bdel(id){if(confirm('حذف الكتاب؟')){D.books=D.books.filter(b=>b.id!==id);D.rlog=D.rlog.filter(r=>r.b!==id);save();render()}}
+function btimer(){if(!D.active){D.active={mode:'sw',acc:0,seg:Date.now(),cat:'القراءة',proj:'',task:0,phase:'focus',t0:Date.now(),target:0};save()}tab='timer';render()}
+V.books=()=>{const d=today(),w=add(d,-6),sm=f=>D.rlog.filter(f).reduce((a,x)=>a+x.p,0);let st=0,x=d;if(!D.rlog.some(r=>r.d===x))x=add(x,-1);while(D.rlog.some(r=>r.d===x)){st++;x=add(x,-1)}
+ const bc=b=>{const pc=b.pg?Math.round(b.read/b.pg*100):0;return `<div class="c"><div class="r sp"><div><b>${esc(b.n)}</b><div class="mu">${esc(b.au)} · بدأ ${b.start}</div></div><span style="color:#e0a100">${b.rate?'★'.repeat(b.rate)+'☆'.repeat(5-b.rate):''}</span></div><div class="r" style="margin:8px 0"><div class="bar"><i style="width:${pc}%"></i></div><span class="mu">${b.read}${b.pg?'/'+b.pg:''} ص</span></div>${b.sum?`<details><summary class="mu">ملخصي</summary><p style="white-space:pre-wrap">${esc(b.sum)}</p></details>`:''}<div class="r"><button class="p" onclick="bpages(${b.id})">＋ صفحات</button><button onclick="btimer()">⏱</button><button onclick="bdlg(${b.id})">✎ ملخص/تقييم</button><button onclick="bfin(${b.id})">${b.fin?'↩ إعادة':'✔ أنهيته'}</button><button class="g" onclick="bdel(${b.id})">🗑</button></div></div>`};
+ const cur=D.books.filter(b=>!b.fin),fin=D.books.filter(b=>b.fin);
+ return `<h2>الكتب</h2><div class="c"><div class="grid" style="grid-template-columns:repeat(3,1fr);text-align:center"><div><div class="mu">اليوم</div><b>${sm(r=>r.d===d)} ص</b></div><div><div class="mu">آخر 7 أيام</div><b>${sm(r=>r.d>=w)} ص</b></div><div><div class="mu">أيام متواصلة</div><b>🔥 ${st}</b></div></div></div>
+ <button class="p" onclick="bdlg(0)" style="margin-bottom:12px">＋ كتاب جديد</button>${cur.length?'<h3>أقرأه الآن</h3>'+cur.map(bc).join(''):''}${fin.length?'<h3>أنهيتها</h3>'+fin.map(bc).join(''):''}${D.books.length?'':'<div class="mu">أضف أول كتاب وسجّل صفحاتك كل يوم</div>'}`};
+
+/* todo */
+let tk='week';const TK={week:'🎯 هدف الأسبوع',day:'📌 اليوم',any:'📝 عام'};
+function tdadd(){const t=$('#tdi').value.trim();if(!t)return;D.todo.push({id:Date.now(),t,k:tk,d:0});save();render()}
+function tdone(id){D.todo.find(x=>x.id===id).d=today();save();render()}
+function tund(id){D.todo.find(x=>x.id===id).d=0;save();render()}
+function tdrm(id){D.todo=D.todo.filter(x=>x.id!==id);save();render()}
+function tded(id){const x=D.todo.find(y=>y.id===id),n=prompt('تعديل:',x.t);if(n&&n.trim()){x.t=n.trim();save();render()}}
+function tclr(){if(confirm('مسح كل المنجزة نهائيًا؟')){D.todo=D.todo.filter(x=>!x.d);save();render()}}
+const tdrow=x=>`<div class="row"><input type="checkbox" onchange="tdone(${x.id})"><div class="t" onclick="tded(${x.id})">${esc(x.t)}</div><button class="g" onclick="tdrm(${x.id})">🗑</button></div>`;
+const todoCard=()=>{const p=D.todo.filter(x=>!x.d&&x.k!=='any').slice(0,5);return p.length?`<div class="c"><div class="r sp"><h3>أريد إنجازه</h3><button class="g" onclick="go('todo')">الكل ←</button></div>${p.map(x=>`<div class="row"><input type="checkbox" onchange="tdone(${x.id})"><div class="t">${esc(x.t)} <span class="chip">${TK[x.k]}</span></div></div>`).join('')}</div>`:''};
+V.todo=()=>{const pend=D.todo.filter(x=>!x.d),dn=D.todo.filter(x=>x.d),wn=dn.filter(x=>x.d>=wk(today())).length;
+ return `<h2>المهام وأهداف الأسبوع</h2><div class="c"><div class="r"><input id="tdi" placeholder="ما الذي يجب أن أنجزه؟" style="flex:1;min-width:150px" onkeydown="if(event.key==='Enter')tdadd()"><select onchange="tk=this.value">${Object.keys(TK).map(k=>`<option value="${k}" ${k===tk?'selected':''}>${TK[k]}</option>`).join('')}</select><button class="p" onclick="tdadd()">＋</button></div><div class="mu" style="margin-top:8px">أنجزت هذا الأسبوع: ${wn} 🎉</div></div>
+ ${Object.keys(TK).map(k=>{const l=pend.filter(x=>x.k===k);return l.length?`<div class="c"><h3>${TK[k]}</h3>${l.map(tdrow).join('')}</div>`:''}).join('')||'<div class="c mu">لا مهام معلّقة، أضف هدف الأسبوع من الأعلى</div>'}
+ ${dn.length?`<details class="c"><summary class="mu">المنجزة (${dn.length})</summary>${dn.slice().reverse().map(x=>`<div class="row done"><div class="t tt">${esc(x.t)}</div><span class="mu">${x.d}</span><button class="g" onclick="tund(${x.id})">↩</button></div>`).join('')}<button onclick="tclr()" style="margin-top:8px">مسح المنجزة</button></details>`:''}`};
+
+/* review & ideas */
+function wstats(w){const all=Array.from({length:7},(_,i)=>add(w,i)),dys=all.filter(d=>d<=today()),S=D.sessions.filter(s=>all.includes(s.date));let tot=0,dn=0;dys.forEach(d=>tasksOn(d).forEach(t=>{tot++;if(t.done&&t.done[d])dn++}));
+ return{sec:S.reduce((a,s)=>a+s.sec,0),tot,dn,pg:D.rlog.filter(r=>all.includes(r.d)).reduce((a,r)=>a+r.p,0),hb:Object.keys(D.hlog).filter(k=>all.includes(k.split('|')[0])).length,jb:D.jobs.log.filter(x=>all.includes(x.d)).length,gl:D.todo.filter(x=>all.includes(x.d)).length}}
+function rsave(){const w=wk(today()),v=i=>$('#r'+i).value,o={w,win:v(1),imp:v(2),nxt:v(3),rate:+v(4)},i=D.revs.findIndex(r=>r.w===w);
+ if(i<0)v(3).split('\n').map(x=>x.trim()).filter(Boolean).forEach(t=>D.todo.push({id:Date.now()+Math.random(),t,k:'week',d:0}));
+ if(i>=0)D.revs[i]=o;else D.revs.push(o);save();toast('تم حفظ مراجعة الأسبوع ✅');render()}
+const revNudge=()=>{const w=wk(today());return [4,5].includes(dow(today()))&&!D.revs.some(r=>r.w===w)?`<div class="c r sp"><div>🔁 حان وقت مراجعة أسبوعك</div><button class="p" onclick="go('rev')">ابدأ</button></div>`:''};
+V.rev=()=>{const w=wk(today()),s=wstats(w),c=D.revs.find(r=>r.w===w),o=c||{win:'',imp:'',nxt:'',rate:3};
+ const st=[['الوقت المسجل',fm(s.sec)],['المهام المنجزة',s.dn+'/'+s.tot],['تسجيلات العادات',s.hb],['صفحات مقروءة',s.pg],['تقديمات وظائف',s.jb],['أهداف أُنجزت',s.gl]];
+ return `<h2>مراجعة الأسبوع</h2><div class="mu">من ${w}</div><div class="c"><div class="grid" style="grid-template-columns:repeat(3,1fr);text-align:center">${st.map(x=>`<div><div class="mu">${x[0]}</div><b>${x[1]}</b></div>`).join('')}</div></div>
+ <div class="c"><label class="mu">ما الذي أنجزته وأفخر به؟</label><textarea id="r1" rows="3" style="width:100%">${esc(o.win)}</textarea><label class="mu">ما الذي أحسّنه الأسبوع القادم؟</label><textarea id="r2" rows="3" style="width:100%">${esc(o.imp)}</textarea><label class="mu">${c?'أهداف الأسبوع القادم (أُضيفت للمهام سابقًا)':'أهداف الأسبوع القادم (سطر لكل هدف، وتُضاف إلى المهام)'}</label><textarea id="r3" rows="3" style="width:100%">${esc(o.nxt)}</textarea><label class="mu">تقييم أسبوعي</label><select id="r4">${[1,2,3,4,5].map(n=>`<option value="${n}" ${n===o.rate?'selected':''}>${'★'.repeat(n)}</option>`).join('')}</select><div style="margin-top:10px"><button class="p" onclick="rsave()">حفظ المراجعة</button></div></div>
+ ${D.revs.filter(r=>r.w!==w).length?`<details class="c"><summary class="mu">مراجعات سابقة</summary>${D.revs.filter(r=>r.w!==w).slice().reverse().map(r=>`<div class="row" style="display:block"><b>${r.w}</b> <span style="color:#e0a100">${'★'.repeat(r.rate)}</span><div class="mu">✔ ${esc(r.win)}</div><div class="mu">↗ ${esc(r.imp)}</div></div>`).join('')}</details>`:''}`};
+const IK=['تطبيق','مشروع','تصميم دعوات','أخرى'];
+function iadd(){const t=$('#ii').value.trim();if(!t)return;D.ideas.unshift({id:Date.now(),t,c:$('#ik').value,d:today()});save();render()}
+function idel(id){D.ideas=D.ideas.filter(x=>x.id!==id);save();render()}
+function ito(id){const x=D.ideas.find(y=>y.id===id);D.todo.push({id:Date.now(),t:x.t,k:'any',d:0});D.ideas=D.ideas.filter(y=>y.id!==id);save();toast('نُقلت إلى المهام');render()}
+V.idea=()=>`<h2>صندوق الأفكار</h2><div class="c"><div class="r"><input id="ii" placeholder="فكرة جديدة…" style="flex:1;min-width:150px" onkeydown="if(event.key==='Enter')iadd()"><select id="ik">${opts(IK)}</select><button class="p" onclick="iadd()">＋</button></div></div><div class="c">${D.ideas.map(x=>`<div class="row"><div class="t">${esc(x.t)}<div class="mu"><span class="chip">${esc(x.c)}</span> ${x.d}</div></div><button class="g" onclick="ito(${x.id})">→ مهمة</button><button class="g" onclick="idel(${x.id})">🗑</button></div>`).join('')||'<div class="mu">سجّل أي فكرة تخطر لك قبل أن تنساها</div>'}</div>`;
+
+/* streak */
+function actDays(){const s=new Set(Object.keys(D.act||{}));D.sessions.forEach(x=>s.add(x.date));D.tasks.forEach(t=>t.done&&Object.keys(t.done).forEach(d=>s.add(d)));Object.keys(D.hlog).forEach(k=>s.add(k.split('|')[0]));D.rlog.forEach(r=>s.add(r.d));D.todo.forEach(x=>x.d&&s.add(x.d));D.jobs.log.forEach(x=>s.add(x.d));return s}
+function streakCard(){const s=actDays();let n=0,d=today();if(!s.has(d))d=add(d,-1);while(s.has(d)){n++;d=add(d,-1)}
+ let b=0,r=0,p=null;[...s].sort().forEach(x=>{r=p&&add(p,1)===x?r+1:1;b=Math.max(b,r);p=x});
+ const l7=Array.from({length:7},(_,i)=>add(today(),i-6));
+ return `<div class="c"><div class="r sp"><div style="font-size:26px">🔥 <b>${n}</b> <span class="mu" style="font-size:14px">يوم متواصل</span></div><div class="mu">أفضل سلسلة: ${b} · أيام النشاط: ${s.size}</div></div><div class="r" style="justify-content:space-between;margin-top:10px">${l7.map(d=>`<div style="text-align:center;font-size:11px"><div style="width:30px;height:30px;border-radius:50%;margin:0 auto 2px;background:${s.has(d)?'var(--ac)':'var(--ac2)'};color:#fff;line-height:30px">${s.has(d)?'✓':''}</div>${DN[dow(d)].slice(0,3)}</div>`).join('')}</div>${s.has(today())?'':'<div class="mu" style="margin-top:8px">سجّل أي إنجاز اليوم للحفاظ على السلسلة 💪</div>'}</div>`}
+
+/* dialogs (prompt/confirm are blocked in published pages) */
+const ask=(q,d)=>new Promise(r=>{const e=document.createElement('dialog');e.innerHTML=`<label style='margin:0 0 6px'>${esc(q)}</label><input value='${esc(d==null?'':d)}'><div class='r' style='margin-top:12px'><button class='p' id='y'>موافق</button><button id='n'>إلغاء</button></div>`;document.body.appendChild(e);e.showModal();const i=e.querySelector('input'),f=v=>{e.close();e.remove();r(v)};e.querySelector('#y').onclick=()=>f(i.value);e.querySelector('#n').onclick=()=>f(null);e.oncancel=()=>f(null);i.onkeydown=k=>{if(k.key==='Enter')f(i.value)};i.focus();i.select()});
+const ok=q=>new Promise(r=>{const e=document.createElement('dialog');e.innerHTML=`<p style='margin:0 0 12px'>${esc(q)}</p><div class='r'><button class='p' id='y'>نعم</button><button id='n'>إلغاء</button></div>`;document.body.appendChild(e);e.showModal();const f=v=>{e.close();e.remove();r(v)};e.querySelector('#y').onclick=()=>f(true);e.querySelector('#n').onclick=()=>f(false);e.oncancel=()=>f(false)});
+const rr=()=>{const y=window.scrollY;render();window.scrollTo(0,y)};
+async function del(id){if(await ok('حذف المهمة؟')){D.tasks=D.tasks.filter(t=>t.id!==id);save();render()}}
+async function mv(id,d){const n=await ask('نقل إلى تاريخ (YYYY-MM-DD):',add(d,1));if(!n)return;const t=D.tasks.find(x=>x.id===id);if(t.rep&&t.rep.length){t.skip=t.skip||{};t.skip[d]=1;D.tasks.push({id:Date.now(),t:t.t,cat:t.cat,proj:t.proj,date:n,time:t.time,dur:t.dur,rem:t.rem,rep:[]})}else t.date=n;save();render()}
+function saveSess(sec,a){if(sec<5)return;D.sessions.push({id:Date.now(),cat:a.cat,proj:a.proj,task:a.task,sub:a.sub||0,sec:Math.round(sec),date:ds(new Date(a.t0)),start:a.t0})}
+async function endT(){const a=A();if(a.phase==='focus')saveSess(el()/1000,a);D.active=null;save();render();if(a.task&&a.phase==='focus'&&await ok('هل أنجزت المهمة؟')){const t=D.tasks.find(x=>x.id===a.task);if(t){t.done=t.done||{};t.done[today()]=1}save();render()}}
+async function msess(){const m=+await ask('عدد الدقائق:','30');if(!m)return;const d=await ask('التاريخ (YYYY-MM-DD):',today());if(!d)return;D.sessions.push({id:Date.now(),cat:$('#tcat')?$('#tcat').value:D.cats[0],proj:'',task:0,sec:m*60,date:d,start:Date.now()});save();render()}
+async function esess(id,k){const s=D.sessions.find(x=>x.id===id);if(k){if(!await ok('حذف الجلسة؟'))return;D.sessions=D.sessions.filter(x=>x.id!==id)}else{const m=+await ask('الدقائق:',Math.round(s.sec/60));if(!m)return;s.sec=m*60}save();render()}
+async function tded(id){const x=D.todo.find(y=>y.id===id),n=await ask('تعديل:',x.t);if(n&&n.trim()){x.t=n.trim();save();render()}}
+async function tclr(){if(await ok('مسح كل المنجزة نهائيًا؟')){D.todo=D.todo.filter(x=>!x.d);save();render()}}
+async function bpages(id){const n=+await ask('كم صفحة قرأت الآن؟','10');if(!n||n<1)return;const b=D.books.find(x=>x.id===id);b.read=b.pg?Math.min(b.pg,b.read+n):b.read+n;D.rlog.push({b:id,p:n,d:today()});if(b.pg&&b.read>=b.pg&&!b.fin){b.fin=1;toast('🎉 أنهيت الكتاب، لا تنس ملخصك')}save();render()}
+async function bdel(id){if(await ok('حذف الكتاب؟')){D.books=D.books.filter(b=>b.id!==id);D.rlog=D.rlog.filter(r=>r.b!==id);save();render()}}
+async function padd(){const n=await ask('اسم المشروع:');if(n&&n.trim()){D.projects.push(n.trim());save();render()}}
+async function pdel(i){if(await ok('حذف المشروع؟')){D.projects.splice(i,1);save();render()}}
+async function gadd(){const n=await ask('الهدف الكبير:');if(!n)return;D.goals.push({id:Date.now(),t:n,proj:'',steps:[]});save();render()}
+async function sadd(id){const n=await ask('الخطوة/المهمة الصغيرة:');if(!n)return;D.goals.find(g=>g.id===id).steps.push({t:n,d:0});save();render()}
+async function gdel(id){if(await ok('حذف الهدف؟')){D.goals=D.goals.filter(g=>g.id!==id);save();render()}}
+async function jadd(){const n=await ask('اسم الموقع/الصفحة:');if(!n)return;const u=await ask('الرابط (https://...):','https://');if(!u||!u.startsWith('http')){toast('الرابط يجب أن يبدأ بـ https://');return}D.jobs.custom.push({n,u});save();render()}
+async function jdel(i){if(await ok('حذف؟')){D.jobs.custom.splice(i,1);save();render()}}
+async function jgoal(){const n=+await ask('هدف التقديمات أسبوعيًا:',D.jobs.goal);if(n>0){D.jobs.goal=n;save();render()}}
+async function jtask(){const s=await ask('يوم التذكير الأسبوعي (0=الأحد … 6=السبت):','0'),n=+s;if(s===null||s===''||isNaN(n)||n<0||n>6)return;D.tasks.push({id:Date.now(),t:'التقديم على وظائف ('+D.jobs.goal+' هذا الأسبوع)',cat:'البحث عن الوظائف',proj:'',date:today(),time:'10:00',dur:60,rem:10,rep:[n],done:{}});save();toast('تمت إضافة مهمة أسبوعية متكررة في الجدول');render()}
+async function cadd(){const n=await ask('اسم التصنيف:');if(n&&n.trim()&&!D.cats.includes(n.trim())){D.cats.push(n.trim());save();render()}}
+async function cdel(i){if(await ok('حذف التصنيف؟')){D.cats.splice(i,1);save();render()}}
+async function ldel(i){if(await ok('حذف؟')){D.learn.splice(i,1);save();render()}}
+
+/* habits */
+const HG=['عبادات','صحة','تعلم','عمل','عام'];
+function hdlg(id){const h=D.habits.find(x=>x.id===id)||{n:'',g:'عام',ty:'check',tg:20,mt:0};
+ $('#dlg').innerHTML=`<h3>${id?'تعديل':'إضافة'} عادة</h3><label>اسم العادة</label><input id='h1' value='${esc(h.n)}'><label>المجموعة</label><select id='h2'>${opts(HG,h.g||'عام')}</select><label>نوع التتبع</label><select id='h3'><option value='check' ${h.ty==='check'?'selected':''}>نقرة واحدة (تمّت / لم تتم)</option><option value='time' ${h.ty==='time'?'selected':''}>بهدف زمني (دقائق يوميًا)</option></select><div class='r'><div style='flex:1'><label>الهدف اليومي (دقيقة)</label><input id='h4' type='number' value='${h.tg||20}'></div><div style='flex:1'><label>هدف شهري (مرات، 0 = بدون)</label><input id='h5' type='number' value='${h.mt||0}'></div></div><div class='r' style='margin-top:12px'><button class='p' onclick='hsave(${id})'>حفظ</button><button onclick="$('#dlg').close()">إلغاء</button></div>`;$('#dlg').showModal()}
+function hsave(id){const n=$('#h1').value.trim();if(!n)return;if(D.habits.some(h=>h.id!==id&&h.n.trim().toLowerCase()===n.toLowerCase())){toast('هذه العادة موجودة بالفعل');return}
+ const ty=$('#h3').value,o={n,g:$('#h2').value,ty,tg:ty==='time'?(+$('#h4').value||20):0,mt:+$('#h5').value||0};
+ if(id)Object.assign(D.habits.find(h=>h.id===id),o);else D.habits.push(Object.assign({id:Date.now()},o));save();$('#dlg').close();render()}
+function hadd(){hdlg(0)}
+async function hdel(id){if(await ok('حذف العادة وسجلها؟')){D.habits=D.habits.filter(h=>h.id!==id);save();render()}}
+async function hmark(id,d){const h=D.habits.find(x=>x.id===id),k=hk(d,id);if(h.ty==='check'){D.hlog[k]?delete D.hlog[k]:D.hlog[k]=1}else{const m=+await ask('أضف دقائق (أو رقمًا سالبًا للتصحيح):','10');if(!m)return;const v=Math.max(0,(D.hlog[k]||0)+m);v?D.hlog[k]=v:delete D.hlog[k]}save();rr()}
+V.habits=()=>{const d=today(),mo=d.slice(0,7),l7=Array.from({length:7},(_,i)=>add(d,i-6)),gs=[...HG,...new Set(D.habits.map(h=>h.g||'عام').filter(g=>!HG.includes(g)))];
+ return `<h2>العادات</h2>${gs.map(g=>{const L=D.habits.filter(h=>(h.g||'عام')===g);return L.length?`<div class='c'><h3>${esc(g)}</h3>${L.map(h=>{const v=D.hlog[hk(d,h.id)]||0,mc=Object.keys(D.hlog).filter(k=>k.startsWith(mo)&&k.endsWith('|'+h.id)).length;
+ return `<div class='row ${h.ty==='check'&&v?'done':''}'><div class='t'><div class='tt'>${esc(h.n)}</div><div class='mu'>🔥 ${streak(h)} يوم${h.ty==='time'?' · '+v+'/'+h.tg+'د':''}${h.mt?' · الشهر '+mc+'/'+h.mt:''}</div><div class='r' style='gap:5px;margin-top:5px'>${l7.map(x=>`<span onclick="hmark(${h.id},'${x}')" style='width:20px;height:20px;border-radius:50%;cursor:pointer;background:${D.hlog[hk(x,h.id)]?'var(--ac)':'var(--ac2)'}'></span>`).join('')}</div></div><button class='${v?'p':''}' onclick="hmark(${h.id},'${d}')">${h.ty==='check'?(v?'✔ تم':'تسجيل'):'＋ دقائق'}</button><button class='g' onclick='hdlg(${h.id})'>✎</button><button class='g' onclick='hdel(${h.id})'>🗑</button></div>`}).join('')}</div>`:''}).join('')||"<div class='c mu'>لا عادات بعد</div>"}<button class='p' onclick='hdlg(0)'>＋ عادة جديدة</button>`};
+const habCard=()=>{if(!D.habits.length)return '';const d=today();return `<div class='c'><div class='r sp'><h3>عادات اليوم</h3><button class='g' onclick="go('habits')">الكل ←</button></div>${D.habits.map(h=>{const v=D.hlog[hk(d,h.id)]||0;return `<div class='row ${h.ty==='check'&&v?'done':''}'><div class='t tt'>${esc(h.n)}</div>${h.ty==='check'?`<input type='checkbox' ${v?'checked':''} onchange="hmark(${h.id},'${d}')">`:`<span class='mu'>${v}/${h.tg}د</span><button class='g' onclick="hmark(${h.id},'${d}')">＋</button>`}</div>`}).join('')}</div>`};
+
+/* learning fields */
+let lv={f:0,s:0};const EM=['📘','🎧','📖','🗣️','✍️','📊','📈','🧮','🗄️','🐍','💻','🧠','🌍','🔤','🎬','📝','🔧','📚','🎯','⭐'];
+const ftime=(ids,w)=>D.sessions.filter(x=>ids.includes(x.sub)&&(!w||x.date>=w)).reduce((a,x)=>a+x.sec,0);
+const fcur=()=>{const F=D.fields.find(x=>x.id===lv.f);return[F,F&&F.subs.find(x=>x.id===lv.s)]};
+function lgo(f,s){lv={f,s};render()}
+function fdlg(k,id){const F=D.fields.find(x=>x.id===lv.f),o=(k===1?D.fields.find(x=>x.id===id):F.subs.find(x=>x.id===id))||{n:'',ic:k===1?'📘':'📖',c:k===1?'أخرى':''};
+ $('#dlg').innerHTML=`<h3>${id?'تعديل':'إضافة'} ${k===1?'مجال':'قسم'}</h3><label>الاسم</label><input id='g1' value='${esc(o.n)}'><label>الأيقونة</label><select id='g2' style='font-size:22px'>${EM.map(e=>`<option ${e===o.ic?'selected':''}>${e}</option>`).join('')}</select><label>تصنيف الوقت في التقارير</label><select id='g3'>${opts(D.cats,o.c,k===2?'— نفس تصنيف المجال —':'')}</select><div class='r' style='margin-top:12px'><button class='p' onclick='fsave(${k},${id})'>حفظ</button><button onclick="$('#dlg').close()">إلغاء</button></div>`;$('#dlg').showModal()}
+function fsave(k,id){const n=$('#g1').value.trim();if(!n)return;const v={n,ic:$('#g2').value,c:$('#g3').value};
+ if(k===1){if(id)Object.assign(D.fields.find(x=>x.id===id),v);else D.fields.push(Object.assign({id:Date.now(),subs:[]},v))}else{const F=D.fields.find(x=>x.id===lv.f);if(id)Object.assign(F.subs.find(x=>x.id===id),v);else F.subs.push(mk(Date.now(),n,v.ic,v.c))}save();$('#dlg').close();render()}
+async function fdel(k,id){if(!await ok(k===1?'حذف المجال بكل أقسامه؟':'حذف القسم؟'))return;if(k===1){D.fields=D.fields.filter(x=>x.id!==id);lv={f:0,s:0}}else{const F=D.fields.find(x=>x.id===lv.f);F.subs=F.subs.filter(x=>x.id!==id);lv.s=0}save();render()}
+const subS=()=>fcur()[1];
+async function sladd(){const S=subS(),n=await ask('اسم الرابط/المصدر:');if(!n)return;const u=await ask('الرابط (https://...):','https://');if(!u||!u.startsWith('http')){toast('الرابط يجب أن يبدأ بـ https://');return}S.links=S.links||[];S.links.push({n,u});save();rr()}
+function sldel(i){subS().links.splice(i,1);save();rr()}
+function siadd(){const v=$('#sii').value.trim();if(!v)return;const S=subS();S.items=S.items||[];S.items.push({t:v,d:0});save();rr()}
+function sitog(i){const x=subS().items[i];x.d=x.d?0:1;save();rr()}
+function sidel(i){subS().items.splice(i,1);save();rr()}
+function snote(v){subS().note=v;save()}
+function lsub(){const [F,S]=fcur();if(D.active)toast('يوجد مؤقت نشط بالفعل');else{D.active={mode:'sw',acc:0,seg:Date.now(),cat:S.c||F.c||'أخرى',proj:'',task:0,phase:'focus',t0:Date.now(),target:0,sub:S.id};save()}tab='timer';render()}
+const tile=(on,ic,n,sub)=>`<div class='c' onclick='${on}' style='text-align:center;cursor:pointer;margin:0'><div style='font-size:${sub?34:46}px'>${ic}</div><b>${esc(n)}</b>${sub?`<div class='mu'>${sub}</div>`:''}</div>`;
+V.learn=()=>{const w=wk(today()),[F,S]=fcur(),G='grid-template-columns:repeat(2,1fr)';
+ if(F&&S){const ls=S.links||[],it=S.items||[];return `<button class='g' onclick='lgo(${F.id},0)'>→ ${esc(F.n)}</button><div class='r sp'><h2>${S.ic} ${esc(S.n)}</h2><div><button class='g' onclick='fdlg(2,${S.id})'>✎</button><button class='g' onclick='fdel(2,${S.id})'>🗑</button></div></div>
+ <div class='c'><div class='r sp'><div><div class='mu'>هذا الأسبوع</div><b>${fm(ftime([S.id],w))}</b></div><div><div class='mu'>الإجمالي</div><b>${fm(ftime([S.id]))}</b></div><button class='p' onclick='lsub()'>▶ ابدأ جلسة</button></div></div>
+ <div class='c'><h3>🔗 روابط ومصادر</h3>${ls.map((l,i)=>`<div class='row'><a class='t' href='${esc(l.u)}' target='_blank' rel='noopener'>${esc(l.n)}</a><button class='g' onclick='sldel(${i})'>🗑</button></div>`).join('')}<button onclick='sladd()' style='margin-top:6px'>＋ رابط</button></div>
+ <div class='c'><h3>✅ ما أريد تعلمه / أفكاري</h3><div class='r'><input id='sii' placeholder='أضف نقطة…' style='flex:1' onkeydown="if(event.key==='Enter')siadd()"><button class='p' onclick='siadd()'>＋</button></div>${it.map((x,i)=>`<div class='row ${x.d?'done':''}'><input type='checkbox' ${x.d?'checked':''} onchange='sitog(${i})'><div class='t tt'>${esc(x.t)}</div><button class='g' onclick='sidel(${i})'>🗑</button></div>`).join('')}</div>
+ <div class='c'><h3>📝 ملاحظات وملخص</h3><textarea rows='6' style='width:100%' onchange='snote(this.value)'>${esc(S.note||'')}</textarea></div>`}
+ if(F)return `<button class='g' onclick='lgo(0,0)'>→ كل المجالات</button><div class='r sp'><h2>${F.ic} ${esc(F.n)}</h2><div><button class='g' onclick='fdlg(1,${F.id})'>✎</button><button class='g' onclick='fdel(1,${F.id})'>🗑</button></div></div><div class='mu' style='margin-bottom:10px'>هذا الأسبوع: ${fm(ftime(F.subs.map(s=>s.id),w))}</div><div class='grid' style='${G}'>${F.subs.map(s=>tile(`lgo(${F.id},${s.id})`,s.ic,s.n,fm(ftime([s.id],w)))).join('')}${tile('fdlg(2,0)','＋','قسم جديد','')}</div>`;
+ return `<h2>🎓 التعلم والتطوير</h2><div class='grid' style='${G}'>${D.fields.map(f=>tile(`lgo(${f.id},0)`,f.ic,f.n,f.subs.length+' أقسام · '+fm(ftime(f.subs.map(s=>s.id),w)))).join('')}${tile('fdlg(1,0)','＋','مجال جديد','')}</div><div style='height:12px'></div>${ss()}<details class='c'><summary class='mu'>مواقع التعلم العامة</summary>${V.sites()}</details>`};
+
+/* reports */
+V.rep=()=>{const n=rg==='day'?1:rg==='week'?7:30,days=Array.from({length:n},(_,i)=>add(today(),-i));
+ const S=D.sessions.filter(s=>days.includes(s.date)),by={},pl={};S.forEach(s=>by[s.cat]=(by[s.cat]||0)+s.sec);
+ let tot=0,dn=0;days.forEach(d=>tasksOn(d).forEach(t=>{tot++;if(t.done&&t.done[d])dn++;pl[t.cat]=(pl[t.cat]||0)+(t.dur||0)*60}));
+ const cats=[...new Set([...Object.keys(by),...Object.keys(pl)])].sort((a,b)=>(by[b]||0)-(by[a]||0)),mx=Math.max(1,...cats.map(c=>Math.max(by[c]||0,pl[c]||0)));
+ const all=S.reduce((a,s)=>a+s.sec,0),last=Array.from({length:7},(_,i)=>add(today(),i-6)),dd=last.map(d=>D.sessions.filter(s=>s.date===d).reduce((a,s)=>a+s.sec,0)),dm=Math.max(1,...dd);
+ return `<h2>التقارير</h2><div class="r">${[['day','اليوم'],['week','أسبوع'],['month','شهر']].map(x=>`<button class="${rg===x[0]?'p':''}" onclick="rg='${x[0]}';render()">${x[1]}</button>`).join('')}</div>
+ <div class="c" style="margin-top:10px"><div class="grid" style="grid-template-columns:repeat(2,1fr)"><div><div class="mu">إجمالي الوقت</div><b>${fm(all)}</b></div><div><div class="mu">جلسات التركيز</div><b>${S.length}</b></div><div><div class="mu">متوسط الجلسة</div><b>${S.length?fm(all/S.length):'—'}</b></div><div><div class="mu">الالتزام بالجدول</div><b>${tot?Math.round(dn/tot*100):0}%</b></div></div></div>
+ <div class="c"><h3>الوقت حسب المجال (فعلي ▇ / مخطط ▒)</h3>${cats.map(c=>`<div style="margin:8px 0"><div class="r sp"><span>${esc(c)}</span><span class="mu">${fm(by[c]||0)} / ${fm(pl[c]||0)}</span></div><div class="bar" style="height:8px"><i style="width:${(by[c]||0)/mx*100}%"></i></div><div class="bar" style="height:6px;margin-top:3px;opacity:.5"><i style="width:${(pl[c]||0)/mx*100}%"></i></div></div>`).join('')||'<div class="mu">لا بيانات بعد</div>'}</div>
+ <div class="c"><h3>آخر 7 أيام</h3><div class="r" style="align-items:flex-end;justify-content:space-around;height:120px">${dd.map((v,i)=>`<div style="text-align:center;font-size:11px"><div style="width:26px;background:var(--ac);border-radius:6px;height:${v/dm*80}px;margin:auto"></div>${fm(v)}<br>${DN[dow(last[i])].slice(0,3)}</div>`).join('')}</div></div>`};
+
+/* settings */
+function cadd(){const n=prompt('اسم التصنيف:');if(n){D.cats.push(n);save();render()}}
+function cdel(i){if(confirm('حذف التصنيف؟')){D.cats.splice(i,1);save();render()}}
+function cfg(k,v){D.cfg[k]=Math.max(1,+v||1);save()}
+function perm(){if(!window.Notification){toast('المتصفح لا يدعم الإشعارات');return}Notification.requestPermission().then(r=>toast(r==='granted'?'تم تفعيل الإشعارات':'لم يُمنح الإذن'))}
+function theme(t){document.documentElement.setAttribute('data-theme',t)}
+function exp(){const csv='date,category,project,minutes\n'+D.sessions.map(s=>[s.date,s.cat,s.proj,Math.round(s.sec/60)].map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(',')).join('\n');
+ $('#dlg').innerHTML=`<h3>تصدير / استيراد</h3><label>نسخة كاملة (انسخها واحفظها، أو الصق نسخة سابقة ثم اضغط استيراد)</label><textarea id="ex" rows="7">${esc(JSON.stringify(D))}</textarea><label>سجل الوقت CSV</label><textarea rows="5" readonly>${esc(csv)}</textarea><div class="r" style="margin-top:10px"><button class="p" onclick="imp()">استيراد</button><button onclick="$('#dlg').close()">إغلاق</button></div>`;$('#dlg').showModal()}
+function imp(){try{const o=JSON.parse($('#ex').value);if(!o.tasks||!o.cats)throw 0;D=o;save();$('#dlg').close();render();toast('تم الاستيراد')}catch(e){toast('نص غير صالح')}}
+V.set=()=>`<h2>الإعدادات</h2><div class="c"><h3>التصنيفات</h3><div class="r">${D.cats.map((c,i)=>`<span class="chip">${esc(c)} <a onclick="cdel(${i})" style="cursor:pointer">✕</a></span>`).join('')}</div><button onclick="cadd()" style="margin-top:8px">＋ تصنيف</button></div>
+ <div class="c"><h3>بومودورو</h3><div class="r"><label>تركيز</label><input type="number" value="${D.cfg.pomo}" style="width:70px" onchange="cfg('pomo',this.value)"><label>استراحة</label><input type="number" value="${D.cfg.brk}" style="width:70px" onchange="cfg('brk',this.value)"></div></div>
+ <div class="c"><h3>التذكيرات</h3><button onclick="perm()">🔔 تفعيل إشعارات الهاتف</button><p class="mu">التذكيرات تعمل فقط والصفحة مفتوحة (ولو في الخلفية). عند إغلاق الموقع تمامًا لا يستطيع المتصفح إرسال إشعارات من صفحة ويب عادية، وستجد المهام المتأخرة في الرئيسية عند فتحه.</p></div>
+ <div class="c"><h3>المظهر والبيانات</h3><div class="r"><button onclick="theme('light')">فاتح</button><button onclick="theme('dark')">داكن</button><button onclick="exp()">📤 تصدير / استيراد</button></div><p class="mu">البيانات محفوظة في متصفح هذا الجهاز.</p></div>`;
+
+/* reminders */
+setInterval(()=>{tick();const d=today(),now=new Date(),m=now.getHours()*60+now.getMinutes();
+ tasksOn(d).forEach(t=>{if(!t.time||t.rem==null||(t.done&&t.done[d]))return;const[h,mi]=t.time.split(':').map(Number),k=t.id+d,sn=(D.fired[k+'s']||0);
+  if(!D.fired[k]&&m>=h*60+mi-t.rem&&m<h*60+mi+60&&m>=sn){D.fired[k]=1;save();notify('⏰ '+t.t+' — '+t.time)}})},1000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick()});
+render();
+</script></body></html>
